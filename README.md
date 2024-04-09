@@ -1,4 +1,4 @@
-# <img src="./icon.svg" width="24px"> ResourceOverrider
+# <img src="./icon.png" width="24px"> ResourceOverrider
 
 A node that replaces Resources on-the-fly using suffixes.
 
