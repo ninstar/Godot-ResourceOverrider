@@ -1,9 +1,9 @@
 [gd_scene load_steps=11 format=3 uid="uid://crylf8jk8nm0"]
 
-[ext_resource type="Script" path="res://example/script.gd" id="1_gpdn2"]
-[ext_resource type="Texture2D" uid="uid://hgvt17o528iv" path="res://example/medal.png" id="1_thfqf"]
-[ext_resource type="Texture2D" uid="uid://d2xwre55ptpmq" path="res://example/medal.silver.png" id="2_0d4lu"]
-[ext_resource type="Texture2D" uid="uid://cqunjdl4xou4v" path="res://example/medal.bronze.png" id="3_qqrsx"]
+[ext_resource type="Script" path="res://examples/resource_overrider/script.gd" id="1_gpdn2"]
+[ext_resource type="Texture2D" uid="uid://hgvt17o528iv" path="res://examples/resource_overrider/medal.png" id="1_thfqf"]
+[ext_resource type="Texture2D" uid="uid://d2xwre55ptpmq" path="res://examples/resource_overrider/medal.silver.png" id="2_0d4lu"]
+[ext_resource type="Texture2D" uid="uid://cqunjdl4xou4v" path="res://examples/resource_overrider/medal.bronze.png" id="3_qqrsx"]
 [ext_resource type="Script" path="res://addons/resource_overrider/resource_overrider.gd" id="4_vfnyf"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e0f43"]
