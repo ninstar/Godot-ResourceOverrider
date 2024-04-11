@@ -27,54 +27,55 @@ class_name ResourceOverrider extends Node
 ## A node that replaces [Resource]s on-the-fly using suffixes.
 ##
 ## [b]ResourceOverrider[/b] is intended to allow easy replacement of
-## [Resource]s on-the-fly by using suffixes to identify them, this can
-## be useful for resources with alternative skins or themes.[br][br]
-## The resource file name requires a suffix for this to work.
-## (See [member override_suffix]).[br][br]
-## ResourceOverrider doesn't preload resources. They are only loaded when
+## resources on-the-fly by using suffixes to identify them. This can be
+## used for components of your game that may have alternative resources,
+## such as character skins and themes. (Alternative resources must
+## have a suffix in their filename for this to work.
+## (See [member override_suffix])[br][br]
+## ResourceOverrider only loads a resource into memory when 
 ## [method apply_override], [method get_resource_override] or
 ## [method override_property] gets called.
 
 
-## A path pointing to a node. properties that can have their [Resource]
+## A path pointing to a node. Any property that can have its resource
 ## overridden must be appended to [member override_properties].
 @export_node_path("Node") var node_path: NodePath: get = get_node_path, set = set_node_path
 
-## A list of properties that can have its [Resource]s overridden.
-## Colon-separated "subnames" are allowed (See [NodePath]).
+## A list of properties that can have its resourrces overridden.
+## Colon-separated "subnames" are allowed. (See [NodePath])
 @export var override_properties: PackedStringArray = []: get = get_override_properties, set = set_override_properties
 
 ## The suffix of the current override.[br][br]
-## All [Resource]s must reside in the same directory as the default
-## resource and have its suffix before the file extension delimited
+## All resources must reside in the same directory as the default
+## one, and have its suffix before the file extension delimited
 ## with a [code].[/code]. The default resource is the only one
-## that doesn't need a suffix. Example:
+## that does not require a suffix. Example:
 ## [codeblock]
 ## medal.png             # Default
 ## medal.silver.png      # "silver"
 ## medal.bronze.png      # "bronze"
 ## [/codeblock]
-## If this property is empty ([code]""[/code]) or a resource is not found it
-## falls back to the default resource. 
+## The default resource is used when this property is empty ([code]""[/code])
+## or the specified override is not found.
 @export var override_suffix: String = "": get = get_override_suffix, set = set_override_suffix
 
 ## Automatically overrides all [member override_properties] that points
-## to a [Resource] when [member override_suffix] changes. If this
+## to a resource when [member override_suffix] is changed. If this
 ## property is set to [code]false[/code] it will be necessary to manually call
 ## [method override_resources] for the changes to take effect.
 @export var override_on_change: bool = true: get = get_override_on_change, set = set_override_on_change
 
-## If [code]true[/code], [Resource]s can be overridden while
+## If [code]true[/code], resources can be overridden while
 ## being processed in the editor. Else, resources can only be overridden
 ## at runtime.
 @export var override_on_editor: bool = false: get = get_override_on_editor, set = set_override_on_editor
 
 
-## Overrides all [member override_properties] that points to a [Resource].
+## Overrides all [member override_properties] that points to a resource.
 ## [br][br] 
-## [b]Note:[/b] This method is called automatically if [member apply_on_change]
-## is [code]true[/code] and changes are made to [member override_suffix]
-## or [member override_properties].
+## [b]Note:[/b] This method is called automatically if changes are made to
+## [member override_suffix] or [member override_properties] while [member apply_on_change]
+## is [code]true[/code].
 func override_resources() -> void:
 	if Engine.is_editor_hint() and not override_on_editor:
 		return
@@ -87,7 +88,7 @@ func override_resources() -> void:
 
 
 ## Returns a [Resource] with an override applied. [param suffix] is
-## the override suffix (see [member override_suffix]).
+## the override suffix. (See [member override_suffix])
 static func get_resource_override(resource: Resource, suffix: String = "") -> Resource:
 	if resource == null:
 		return null
@@ -114,7 +115,7 @@ static func get_resource_override(resource: Resource, suffix: String = "") -> Re
 
 
 ## Overrides the [Resource] of an [Object]'s [param property] directly.
-## [param suffix] is the override suffix (see [member override_suffix]).
+## [param suffix] is the override suffix. (See [member override_suffix])
 static func override_property(object: Object, property: NodePath, suffix: String = "") -> void:
 	var res: Resource = object.get_indexed(property)
 	object.set_indexed(property, ResourceOverrider.get_resource_override(res, suffix))
