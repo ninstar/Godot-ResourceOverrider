@@ -161,7 +161,8 @@ stretch_mode = 3
 unique_name_in_owner = true
 script = ExtResource("4_vfnyf")
 node_path = NodePath("..")
-override_properties = PackedStringArray("texture")
+node_properties = PackedStringArray("texture")
 
 [connection signal="text_changed" from="Box/Options/Container/Box/Suffix" to="." method="_on_suffix_text_changed"]
 [connection signal="item_activated" from="Box/Options/Container/Box/Files" to="." method="_on_files_item_activated"]
+[connection signal="override_applied" from="Box/Preview/Container/TextureRect/ResourceOverrider" to="." method="_on_override_applied"]

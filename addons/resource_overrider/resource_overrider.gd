@@ -11,21 +11,32 @@ class_name ResourceOverrider extends Node
 ## used for components of your game that may have alternative resources,
 ## such as character skins and themes. (Alternative resources must
 ## have a suffix in their filename for this to work.
-## (See [member override_suffix])[br][br]
+## (See [member current_suffix])[br][br]
 ## ResourceOverrider only loads a resource into memory when 
 ## [method apply_override], [method get_resource_override] or
 ## [method override_property] gets called.
 
 
+## Emitted when one or more resources in [member node_properties]
+## are overridden.
+signal override_applied()
+
+
 ## A path pointing to a node. Any property that can have its resource
-## overridden must be appended to [member override_properties].
+## overridden must be appended to [member node_properties].
 @export_node_path("Node") var node_path: NodePath: get = get_node_path, set = set_node_path
 
-## A list of properties that can have its resourrces overridden.
+## A list of properties that can have its resources overridden.
 ## Colon-separated "subnames" are allowed. (See [NodePath])
-@export var override_properties: PackedStringArray = []: get = get_override_properties, set = set_override_properties
+## [br][br]
+## The following methods can be used to handle these properties using NodePaths
+## instead of Strings:
+## [method add_node_property_path], [method has_node_property_path],
+## [method remove_node_property_path] and [method get_node_properties_path].
+@export var node_properties: PackedStringArray = []: get = get_node_properties, set = set_node_properties
 
-## The suffix of the current override.[br][br]
+## The suffix being used to override resources in [member node_properties].
+## [br][br]
 ## All resources must reside in the same directory as the default
 ## one, and have its suffix before the file extension delimited
 ## with a [code].[/code]. The default resource is the only one
@@ -37,38 +48,78 @@ class_name ResourceOverrider extends Node
 ## [/codeblock]
 ## The default resource is used when this property is empty ([code]""[/code])
 ## or the specified override is not found.
-@export var override_suffix: String = "": get = get_override_suffix, set = set_override_suffix
+@export var current_suffix: String = "": get = get_current_suffix, set = set_current_suffix
 
-## Automatically overrides all [member override_properties] that points
-## to a resource when [member override_suffix] is changed. If this
-## property is set to [code]false[/code] it will be necessary to manually call
-## [method override_resources] for the changes to take effect.
-@export var override_on_change: bool = true: get = get_override_on_change, set = set_override_on_change
+## Automatically overrides all [member node_properties] when
+## [member current_suffix] is changed. If this property is set to
+## [code]false[/code] it will be necessary to manually call
+## [method apply_override] for changes to take effect.
+@export var apply_on_change: bool = true: get = get_apply_on_change, set = set_apply_on_change
 
 ## If [code]true[/code], resources can be overridden while
 ## being processed in the editor. Else, resources can only be overridden
 ## at runtime.
-@export var override_on_editor: bool = false: get = get_override_on_editor, set = set_override_on_editor
+@export var apply_on_editor: bool = false: get = get_apply_on_editor, set = set_apply_on_editor
 
 
-## Overrides all [member override_properties] that points to a resource.
+## Overrides all [member node_properties] that points to a resource.
 ## [br][br] 
 ## [b]Note:[/b] This method is called automatically if changes are made to
-## [member override_suffix] or [member override_properties] while [member apply_on_change]
+## [member current_suffix] or [member node_properties] while [member apply_on_change]
 ## is [code]true[/code].
-func override_resources() -> void:
-	if Engine.is_editor_hint() and not override_on_editor:
+func apply_override() -> void:
+	if Engine.is_editor_hint() and not apply_on_editor:
 		return
 	
 	var node := get_node_or_null(node_path) as Node
 	if is_instance_valid(node):
-		# Override resources of the specified properties
-		for property: String in override_properties:
-			ResourceOverrider.override_property(node, NodePath(property), override_suffix)
+		var total_applied: int = 0
+		
+		# Override resources of the specified properties only if its different
+		for property: String in node_properties:
+			var old_res: Resource = node.get_indexed(property)
+			var new_res: Resource = ResourceOverrider.get_resource_override(old_res, current_suffix)
+			if old_res != new_res:
+				node.set_indexed(property, new_res)
+				total_applied += 1
+		
+		if total_applied > 0:
+			override_applied.emit()
+
+
+## Adds the property identified by the given [param path] to the list
+## of [member node_properties].
+func add_node_property_path(path: NodePath) -> void:
+	var path_string: String = str(path)
+	if not node_properties.has(path_string):
+		node_properties.append(path_string)
+
+
+## Removes the property identified by the given [param path]
+## from the list of [member node_properties].
+func remove_node_property_path(path: NodePath) -> void:
+	var property_pos: int = node_properties.find(str(path))
+	if property_pos > -1:
+		node_properties.remove_at(property_pos)
+
+
+## Returns whether the given [param path] is in the list of
+## [member node_properties].
+func has_node_property_path(path: NodePath) -> void:
+	return node_properties.has(str(path))
+
+
+## Returns a list of all [member node_properties] as [NodePath]s.
+func get_node_properties_path() -> Array[NodePath]:
+	var path_list: Array[NodePath] = []
+	for property_string: String in node_properties:
+		path_list.append(NodePath(property_string))
+	return path_list
 
 
 ## Returns a [Resource] with an override applied. [param suffix] is
-## the override suffix. (See [member override_suffix])
+## the suffix of the resouce that will be loaded as an override.
+## (See [member current_suffix])
 static func get_resource_override(resource: Resource, suffix: String = "") -> Resource:
 	if resource == null:
 		return null
@@ -94,8 +145,9 @@ static func get_resource_override(resource: Resource, suffix: String = "") -> Re
 	return res
 
 
-## Overrides the [Resource] of an [Object]'s [param property] directly.
-## [param suffix] is the override suffix. (See [member override_suffix])
+## Overrides the [Resource] of an [Object]'s property directly.
+## [param suffix] the suffix of the resouce that will be loaded as an override.
+## (See [member current_suffix])
 static func override_property(object: Object, property: NodePath, suffix: String = "") -> void:
 	var res: Resource = object.get_indexed(property)
 	object.set_indexed(property, ResourceOverrider.get_resource_override(res, suffix))
@@ -109,20 +161,20 @@ func get_node_path() -> NodePath:
 	return node_path
 
 
-func get_override_properties() -> PackedStringArray:
-	return override_properties
+func get_node_properties() -> PackedStringArray:
+	return node_properties
 
 
-func get_override_suffix() -> String:
-	return override_suffix
+func get_current_suffix() -> String:
+	return current_suffix
 
 
-func get_override_on_change() -> bool:
-	return override_on_change
+func get_apply_on_change() -> bool:
+	return apply_on_change
 
 
-func get_override_on_editor() -> bool:
-	return override_on_editor
+func get_apply_on_editor() -> bool:
+	return apply_on_editor
 
 
 # Setters
@@ -131,28 +183,28 @@ func set_node_path(value: NodePath) -> void:
 	node_path = value
 
 
-func set_override_properties(value: PackedStringArray) -> void:
-	override_properties = value
+func set_node_properties(value: PackedStringArray) -> void:
+	node_properties = value
 	if not is_node_ready():
 		await ready
-	if override_on_change:
-		override_resources()
+	if apply_on_change:
+		apply_override()
 
 
-func set_override_suffix(value: String) -> void:
-	override_suffix = value
+func set_current_suffix(value: String) -> void:
+	current_suffix = value
 	if not is_node_ready():
 		await ready
-	if override_on_change:
-		override_resources()
+	if apply_on_change:
+		apply_override()
 
 
-func set_override_on_change(value: bool) -> void:
-	override_on_change = value
+func set_apply_on_change(value: bool) -> void:
+	apply_on_change = value
 
 
-func set_override_on_editor(value: bool) -> void:
-	override_on_editor = value
+func set_apply_on_editor(value: bool) -> void:
+	apply_on_editor = value
 
 #endregion
 
