@@ -13,8 +13,8 @@ class_name ResourceOverrider extends Node
 ## have a suffix in their filename for this to work.
 ## (See [member current_suffix])[br][br]
 ## ResourceOverrider only loads a resource into memory when 
-## [method apply_override], [method get_resource_override] or
-## [method override_property] gets called.
+## [method apply], [method apply_to] or
+## [method get_applied] gets called.
 
 
 ## Emitted when one or more resources in [member node_properties]
@@ -32,7 +32,7 @@ signal override_applied()
 ## The following methods can be used to handle these properties using NodePaths
 ## instead of Strings:
 ## [method add_node_property_path], [method has_node_property_path],
-## [method remove_node_property_path] and [method get_node_properties_path].
+## [method remove_node_property_path] and [method get_node_property_path_list].
 @export var node_properties: PackedStringArray = []: get = get_node_properties, set = set_node_properties
 
 ## The suffix being used to override resources in [member node_properties].
@@ -53,7 +53,7 @@ signal override_applied()
 ## Automatically overrides all [member node_properties] when
 ## [member current_suffix] is changed. If this property is set to
 ## [code]false[/code] it will be necessary to manually call
-## [method apply_override] for changes to take effect.
+## [method apply] for changes to take effect.
 @export var apply_on_change: bool = true: get = get_apply_on_change, set = set_apply_on_change
 
 ## If [code]true[/code], resources can be overridden while
@@ -67,7 +67,7 @@ signal override_applied()
 ## [b]Note:[/b] This method is called automatically if changes are made to
 ## [member current_suffix] or [member node_properties] while [member apply_on_change]
 ## is [code]true[/code].
-func apply_override() -> void:
+func apply() -> void:
 	if Engine.is_editor_hint() and not apply_on_editor:
 		return
 	
@@ -78,7 +78,7 @@ func apply_override() -> void:
 		# Override resources of the specified properties only if its different
 		for property: String in node_properties:
 			var old_res: Resource = node.get_indexed(property)
-			var new_res: Resource = ResourceOverrider.get_resource_override(old_res, current_suffix)
+			var new_res: Resource = ResourceOverrider.get_applied(old_res, current_suffix)
 			if old_res != new_res:
 				node.set_indexed(property, new_res)
 				total_applied += 1
@@ -110,17 +110,17 @@ func has_node_property_path(path: NodePath) -> void:
 
 
 ## Returns a list of all [member node_properties] as [NodePath]s.
-func get_node_properties_path() -> Array[NodePath]:
+func get_node_property_path_list() -> Array[NodePath]:
 	var path_list: Array[NodePath] = []
 	for property_string: String in node_properties:
 		path_list.append(NodePath(property_string))
 	return path_list
 
 
-## Returns a [Resource] with an override applied. [param suffix] is
-## the suffix of the resouce that will be loaded as an override.
+## Returns a [Resource] with an override applied. [param override] is
+## the suffix of the resource that will be loaded as an override.
 ## (See [member current_suffix])
-static func get_resource_override(resource: Resource, suffix: String = "") -> Resource:
+static func get_applied(resource: Resource, override: String = "") -> Resource:
 	if resource == null:
 		return null
 
@@ -134,7 +134,7 @@ static func get_resource_override(resource: Resource, suffix: String = "") -> Re
 		file = file.get_basename()
 
 	# Load resource
-	var override_file: String = path + file + "." + suffix + "." + extension
+	var override_file: String = path + file + "." + override + "." + extension
 	var default_file: String = path + file + "." + extension
 
 	if ResourceLoader.exists(override_file):
@@ -145,12 +145,12 @@ static func get_resource_override(resource: Resource, suffix: String = "") -> Re
 	return res
 
 
-## Overrides the [Resource] of an [Object]'s property directly.
-## [param suffix] the suffix of the resouce that will be loaded as an override.
+## Overrides the [Resource] of an [Object]'s property directly. [param override]
+## is the suffix of the resource that will be loaded as an override.
 ## (See [member current_suffix])
-static func override_property(object: Object, property: NodePath, suffix: String = "") -> void:
+static func apply_to(object: Object, property: NodePath, override: String = "") -> void:
 	var res: Resource = object.get_indexed(property)
-	object.set_indexed(property, ResourceOverrider.get_resource_override(res, suffix))
+	object.set_indexed(property, ResourceOverrider.get_applied(res, override))
 
 
 #region Getters & Setters
@@ -188,7 +188,7 @@ func set_node_properties(value: PackedStringArray) -> void:
 	if not is_node_ready():
 		await ready
 	if apply_on_change:
-		apply_override()
+		apply()
 
 
 func set_current_suffix(value: String) -> void:
@@ -196,7 +196,7 @@ func set_current_suffix(value: String) -> void:
 	if not is_node_ready():
 		await ready
 	if apply_on_change:
-		apply_override()
+		apply()
 
 
 func set_apply_on_change(value: bool) -> void:
@@ -207,4 +207,3 @@ func set_apply_on_editor(value: bool) -> void:
 	apply_on_editor = value
 
 #endregion
-
