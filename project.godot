@@ -14,7 +14,7 @@ config/name="ResourceOverrider"
 config/description="A node that replaces Resources on-the-fly using suffixes."
 config/tags=PackedStringArray("addon")
 run/main_scene="res://examples/resource_overrider/scene.tscn"
-config/features=PackedStringArray("4.2")
+config/features=PackedStringArray("4.4")
 config/icon="res://icon.png"
 
 [editor_plugins]
